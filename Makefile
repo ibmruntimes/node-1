@@ -10,6 +10,9 @@ TEST_CI_ARGS ?=
 STAGINGSERVER ?= node-www
 LOGLEVEL ?= silent
 OSTYPE := $(shell uname -s | tr '[:upper:]' '[:lower:]')
+ifeq ($(findstring OS/390,$OSTYPE),OS/390)
+OSTYPE ?= OS390
+endif
 ARCHTYPE := $(shell uname -m | tr '[:upper:]' '[:lower:]')
 COVTESTS ?= test-cov
 COV_SKIP_TESTS ?= core_line_numbers.js,testFinalizer.js,test_function/test.js
@@ -824,6 +827,9 @@ endif # ifeq ($(DISTTYPE),release)
 DISTTYPEDIR ?= $(DISTTYPE)
 RELEASE=$(shell sed -ne 's/\#define NODE_VERSION_IS_RELEASE \([01]\)/\1/p' src/node_version.h)
 PLATFORM=$(shell uname | tr '[:upper:]' '[:lower:]')
+ifeq ($(findstring OS/390,$PLATFORM),OS/390)
+PLATFORM ?= OS390
+endif
 NPMVERSION=v$(shell cat deps/npm/package.json | grep '"version"' | sed 's/^[^:]*: "\([^"]*\)",.*/\1/')
 
 UNAME_M=$(shell uname -m)
@@ -840,6 +846,9 @@ ifeq ($(findstring ppc,$(UNAME_M)),ppc)
 DESTCPU ?= ppc
 else
 ifeq ($(findstring s390x,$(UNAME_M)),s390x)
+DESTCPU ?= s390x
+else
+ifeq ($(findstring OS/390,$(shell uname -s)),OS/390)
 DESTCPU ?= s390x
 else
 ifeq ($(findstring s390,$(UNAME_M)),s390)
@@ -861,6 +870,7 @@ ifeq ($(findstring riscv64,$(UNAME_M)),riscv64)
 DESTCPU ?= riscv64
 else
 DESTCPU ?= x86
+endif
 endif
 endif
 endif
