@@ -13,6 +13,7 @@ import subprocess
 import shutil
 import bz2
 import io
+import tempfile
 
 # Fallback to find_executable from distutils.spawn is a stopgap for
 # supporting V8 builds, which do not yet support Python 3.
@@ -68,6 +69,9 @@ shared_optgroup = parser.add_argument_group("Shared libraries",
     "Flags that allows you to control whether you want to build against "
     "built-in dependencies or its shared representations. If necessary, "
     "provide multiple libraries with comma.")
+static_optgroup = parser.add_argument_group("Static libraries",
+    "Flags that allows you to control whether you want to build against "
+    "additional static libraries.")
 intl_optgroup = parser.add_argument_group("Internationalization",
     "Flags that lets you enable i18n features in Node.js as well as which "
     "library you want to build against.")
@@ -418,6 +422,13 @@ shared_optgroup.add_argument('--shared-cares-libpath',
     help='a directory to search for the shared cares DLL')
 
 parser.add_argument_group(shared_optgroup)
+
+static_optgroup.add_argument('--static-zoslib-gyp',
+    action='store',
+    dest='static_zoslib_gyp',
+    help='path to zoslib.gyp file for includes and to link to static zoslib libray')
+
+parser.add_argument_group(static_optgroup)
 
 parser.add_argument('--systemtap-includes',
     action='store',
@@ -855,16 +866,32 @@ def pkg_config(pkg):
 
 
 def try_check_compiler(cc, lang):
-  try:
-    proc = subprocess.Popen(shlex.split(cc) + ['-E', '-P', '-x', lang, '-'],
+  if sys.platform == 'zos':
+    f = tempfile.NamedTemporaryFile(delete=False, suffix=".cc")
+    f.write(b'__clang__ __GNUC__ __GNUC_MINOR__ __GNUC_PATCHLEVEL__ '
+            b'__clang_major__ __clang_minor__ __clang_patchlevel__')
+    os.system('chtag -tc 819 %s' % f.name)
+    f.close()
+    try:
+      proc = subprocess.Popen(shlex.split(cc) + ['-E', '-P', f.name ],
                             stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-  except OSError:
-    return (False, False, '', '')
+    except OSError:
+      return (False, False, '', '')
+  else:
+    try:
+      proc = subprocess.Popen(shlex.split(cc) + ['-E', '-P', '-x', lang, '-'],
+                              stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    except OSError:
+      return (False, False, '', '')
 
   proc.stdin.write(b'__clang__ __GNUC__ __GNUC_MINOR__ __GNUC_PATCHLEVEL__ '
                    b'__clang_major__ __clang_minor__ __clang_patchlevel__')
 
-  values = (to_utf8(proc.communicate()[0]).split() + ['0'] * 7)[0:7]
+  if sys.platform == 'zos':
+    values = (to_utf8(proc.communicate()[0]).split('\n')[-2].split() + ['0'] * 7)[0:7]
+  else:
+    values = (to_utf8(proc.communicate()[0]).split() + ['0'] * 7)[0:7]
+
   is_clang = values[0] == '1'
   gcc_version = tuple(map(int, values[1:1+3]))
   clang_version = tuple(map(int, values[4:4+3])) if is_clang else None
@@ -1051,7 +1078,10 @@ def is_arm_hard_float_abi():
 def host_arch_cc():
   """Host architecture check using the CC command."""
 
-  k = cc_macros(os.environ.get('CC_host'))
+  if sys.platform.startswith('zos'):
+    return 's390x';
+  else:
+    k = cc_macros(os.environ.get('CC_host'))
 
   matchup = {
     '__aarch64__' : 'arm64',
@@ -1205,6 +1235,8 @@ def configure_node(o):
     configure_arm(o)
   elif target_arch in ('mips', 'mipsel', 'mips64el'):
     configure_mips(o, target_arch)
+  elif sys.platform == 'zos':
+    configure_static_zoslib(o)
 
   if flavor == 'aix':
     o['variables']['node_target_type'] = 'static_library'
@@ -1317,6 +1349,8 @@ def configure_node(o):
     shlib_suffix = '%s.dylib'
   elif sys.platform.startswith('aix'):
     shlib_suffix = '%s.a'
+  elif sys.platform.startswith('zos'):
+    shlib_suffix = '%s.x'
   else:
     shlib_suffix = 'so.%s'
   if '%s' in shlib_suffix:
@@ -1407,6 +1441,8 @@ def configure_v8(o):
     o['variables']['test_isolation_mode'] = 'noop'  # Needed by d8.gyp.
   if options.without_bundled_v8 and options.enable_d8:
     raise Exception('--enable-d8 is incompatible with --without-bundled-v8.')
+  if options.static_zoslib_gyp:
+    o['variables']['static_zoslib_gyp'] = options.static_zoslib_gyp
 
 
 def configure_openssl(o):
@@ -1498,6 +1534,15 @@ def configure_static(o):
       o['libraries'] += ['-static-libgcc', '-static-libstdc++']
       if options.enable_asan:
         o['libraries'] += ['-static-libasan']
+
+
+def configure_static_zoslib(output):
+  output['variables']['node_static_zoslib'] = b(True)
+  if options.static_zoslib_gyp:
+    # Apply to all Node.js components for now
+    output['include_dirs'] += [os.path.dirname(options.static_zoslib_gyp) + '/include']
+  else:
+    raise Exception('--static-zoslib-gyp=<path to zoslib.gyp file> is required.')
 
 
 def write(filename, data):
@@ -1810,6 +1855,9 @@ def configure_intl(o):
   elif sys.platform.startswith('aix'):
     icu_config['variables']['icu_asm_ext'] = 'S'
     icu_config['variables']['icu_asm_opts'] = [ '-a', 'xlc' ]
+  elif sys.platform == 'zos':
+    icu_config['variables']['icu_asm_ext'] = 'S'
+    icu_config['variables']['icu_asm_opts'] = [ '-a', 'zos' ]
   else:
     # assume GCC-compatible asm is OK
     icu_config['variables']['icu_asm_ext'] = 'S'
