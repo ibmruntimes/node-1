@@ -228,6 +228,18 @@ def headers(action):
     files_arg = [name for name in files_arg if name in v8_headers]
     action(files_arg, dest)
 
+  def wanted_zoslib_headers(files_arg, dest):
+    zoslib_headers = [
+      zoslibinc + '/csrsic.h',
+      zoslibinc + '/edcwccwi.h',
+      zoslibinc + '/zos-base.h',
+      zoslibinc + '/zos-semaphore.h',
+      zoslibinc + '/zos-sys-info.h',
+      zoslibinc + '/zos.h',
+    ]
+    files_arg = [name for name in files_arg if name in zoslib_headers]
+    action(files_arg, dest)
+
   action([
     'common.gypi',
     'config.gypi',
@@ -261,6 +273,10 @@ def headers(action):
       'deps/zlib/zconf.h',
       'deps/zlib/zlib.h',
     ], 'include/node/')
+
+  if sys.platform == 'zos':
+    zoslibinc = os.environ.get('ZOSLIB_INCLUDES')
+    subdir_files(zoslibinc, 'include/node/zoslib/', wanted_zoslib_headers)
 
 def run(args):
   global node_prefix, install_path, target_defaults, variables
