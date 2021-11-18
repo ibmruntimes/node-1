@@ -233,8 +233,13 @@ def headers(action):
       zoslibinc + '/csrsic.h',
       zoslibinc + '/edcwccwi.h',
       zoslibinc + '/zos-base.h',
+      zoslibinc + '/zos-bpx.h',
+      zoslibinc + '/zos-char-util.h',
+      zoslibinc + '/zos-io.h',
       zoslibinc + '/zos-semaphore.h',
+      zoslibinc + '/zos-setlibpath.h',
       zoslibinc + '/zos-sys-info.h',
+      zoslibinc + '/zos-tls.h',
       zoslibinc + '/zos.h',
     ]
     files_arg = [name for name in files_arg if name in zoslib_headers]
