@@ -603,7 +603,7 @@
           '-qASM',
         ],
         'cflags_cc': [
-          '-qxclang=-std=c++1y',
+          '-qxclang=-std=c++14',
         ],
         'ldflags': [
           '-q64',
