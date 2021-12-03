@@ -577,10 +577,12 @@
       ['OS == "zos"', {
         'defines': [
           '_XOPEN_SOURCE_EXTENDED',
+          '_XOPEN_SOURCE=600',
           '_UNIX03_THREADS',
           '_UNIX03_WITHDRAWN',
           '_UNIX03_SOURCE',
           '_OPEN_SYS_SOCK_IPV6',
+          '_OPEN_SYS_FILE_EXT=1',
           '_POSIX_SOURCE',
           '_OPEN_SYS',
           '_OPEN_SYS_IF_EXT',
@@ -588,9 +590,13 @@
           '_OPEN_MSGQ_EXT',
           '_LARGE_TIME_API',
           '_ALL_SOURCE',
+          '_AE_BIMODAL=1',
           '__IBMCPP_TR1__',
           'NODE_PLATFORM="os390"',
           'PATH_MAX=1024',
+          '_ENHANCED_ASCII_EXT=0xFFFFFFFF',
+          '_Export=extern',
+          '__static_assert=static_assert',
         ],
         'cflags': [
           '-q64',
