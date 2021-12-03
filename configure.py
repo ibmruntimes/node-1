@@ -1166,6 +1166,14 @@ def configure_mips(o, target_arch):
   host_byteorder = 'little' if target_arch in ('mipsel', 'mips64el') else 'big'
   o['variables']['v8_host_byteorder'] = host_byteorder
 
+def configure_zos(o):
+  o['variables']['node_static_zoslib'] = b(True)
+  if options.static_zoslib_gyp:
+    # Apply to all Node.js components for now
+    o['include_dirs'] += [os.path.dirname(options.static_zoslib_gyp) + '/include']
+  else:
+    raise Exception('--static-zoslib-gyp=<path to zoslib.gyp file> is required.')
+
 def clang_version_ge(version_checked):
   for compiler in [(CC, 'c'), (CXX, 'c++')]:
     ok, is_clang, clang_version, gcc_version = \
@@ -1236,7 +1244,7 @@ def configure_node(o):
   elif target_arch in ('mips', 'mipsel', 'mips64el'):
     configure_mips(o, target_arch)
   elif sys.platform == 'zos':
-    configure_static_zoslib(o)
+    configure_zos(o)
 
   if flavor == 'aix':
     o['variables']['node_target_type'] = 'static_library'
@@ -1534,15 +1542,6 @@ def configure_static(o):
       o['libraries'] += ['-static-libgcc', '-static-libstdc++']
       if options.enable_asan:
         o['libraries'] += ['-static-libasan']
-
-
-def configure_static_zoslib(output):
-  output['variables']['node_static_zoslib'] = b(True)
-  if options.static_zoslib_gyp:
-    # Apply to all Node.js components for now
-    output['include_dirs'] += [os.path.dirname(options.static_zoslib_gyp) + '/include']
-  else:
-    raise Exception('--static-zoslib-gyp=<path to zoslib.gyp file> is required.')
 
 
 def write(filename, data):
