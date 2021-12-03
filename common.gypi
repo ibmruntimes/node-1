@@ -205,6 +205,7 @@
             'ldflags': [ '-Wl,-z,allextract' ]
           }],
           ['OS=="zos"', {
+            # increase performance, number from experimentation
             'cflags': [ '-qINLINE=::150:100000' ]
           }],
           ['OS!="mac" and OS!="win" and OS!="zos"', {
