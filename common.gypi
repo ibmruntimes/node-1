@@ -604,7 +604,7 @@
           '-Wa,GOFF',
           '-qARCH=10',
           '-qASCII',
-          '-qTUNE=10',
+          '-qTUNE=12',
           '-qENUM=INT',
           '-qEXPORTALL',
           '-qASM',
