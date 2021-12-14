@@ -10,8 +10,8 @@ TEST_CI_ARGS ?=
 STAGINGSERVER ?= node-www
 LOGLEVEL ?= silent
 OSTYPE := $(shell uname -s | tr '[:upper:]' '[:lower:]')
-ifeq ($(findstring OS/390,$OSTYPE),OS/390)
-OSTYPE ?= OS390
+ifeq ($(findstring os/390,$OSTYPE),os/390)
+OSTYPE ?= os390
 endif
 ARCHTYPE := $(shell uname -m | tr '[:upper:]' '[:lower:]')
 COVTESTS ?= test-cov
@@ -827,8 +827,8 @@ endif # ifeq ($(DISTTYPE),release)
 DISTTYPEDIR ?= $(DISTTYPE)
 RELEASE=$(shell sed -ne 's/\#define NODE_VERSION_IS_RELEASE \([01]\)/\1/p' src/node_version.h)
 PLATFORM=$(shell uname | tr '[:upper:]' '[:lower:]')
-ifeq ($(findstring OS/390,$PLATFORM),OS/390)
-PLATFORM ?= OS390
+ifeq ($(findstring os/390,$PLATFORM),os/390)
+PLATFORM ?= os390
 endif
 NPMVERSION=v$(shell cat deps/npm/package.json | grep '"version"' | sed 's/^[^:]*: "\([^"]*\)",.*/\1/')
 
