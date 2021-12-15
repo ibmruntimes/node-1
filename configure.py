@@ -866,23 +866,11 @@ def pkg_config(pkg):
 
 
 def try_check_compiler(cc, lang):
-  if sys.platform == 'zos':
-    f = tempfile.NamedTemporaryFile(delete=False, suffix=".cc")
-    f.write(b'__clang__ __GNUC__ __GNUC_MINOR__ __GNUC_PATCHLEVEL__ '
-            b'__clang_major__ __clang_minor__ __clang_patchlevel__')
-    os.system('chtag -tc 819 %s' % f.name)
-    f.close()
-    try:
-      proc = subprocess.Popen(shlex.split(cc) + ['-E', '-P', f.name ],
+  try:
+    proc = subprocess.Popen(shlex.split(cc) + ['-E', '-P', '-x', lang, '-'],
                             stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    except OSError:
-      return (False, False, '', '')
-  else:
-    try:
-      proc = subprocess.Popen(shlex.split(cc) + ['-E', '-P', '-x', lang, '-'],
-                              stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    except OSError:
-      return (False, False, '', '')
+  except OSError:
+    return (False, False, '', '')
 
   proc.stdin.write(b'__clang__ __GNUC__ __GNUC_MINOR__ __GNUC_PATCHLEVEL__ '
                    b'__clang_major__ __clang_minor__ __clang_patchlevel__')
