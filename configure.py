@@ -1067,8 +1067,7 @@ def host_arch_cc():
 
   if sys.platform.startswith('zos'):
     return 's390x';
-  else:
-    k = cc_macros(os.environ.get('CC_host'))
+  k = cc_macros(os.environ.get('CC_host'))
 
   matchup = {
     '__aarch64__' : 'arm64',
