@@ -1066,7 +1066,7 @@ def host_arch_cc():
   """Host architecture check using the CC command."""
 
   if sys.platform.startswith('zos'):
-    return 's390x';
+    return 's390x'
   k = cc_macros(os.environ.get('CC_host'))
 
   matchup = {
