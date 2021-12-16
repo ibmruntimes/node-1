@@ -13,7 +13,6 @@ import subprocess
 import shutil
 import bz2
 import io
-import tempfile
 
 # Fallback to find_executable from distutils.spawn is a stopgap for
 # supporting V8 builds, which do not yet support Python 3.
