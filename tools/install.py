@@ -270,6 +270,10 @@ def headers(action):
 
   if sys.platform == 'zos':
     zoslibinc = os.environ.get('ZOSLIB_INCLUDES')
+    if not zoslibinc:
+      raise RuntimeError('Environment variable ZOSLIB_INCLUDES is not set\n')
+    if not os.path.isfile(zoslibinc + '/zos-base.h'):
+      raise RuntimeError('ZOSLIB_INCLUDES is not set to a valid location\n')
     subdir_files(zoslibinc, 'include/node/zoslib/', wanted_zoslib_headers)
 
 def run(args):
