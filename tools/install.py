@@ -7,6 +7,7 @@ import errno
 import os
 import shutil
 import sys
+import re
 
 # set at init time
 node_prefix = '/usr/local' # PREFIX variable from Makefile
@@ -120,6 +121,17 @@ def corepack_files(action):
 #   'pnpx': 'dist/pnpx.js',
   })
 
+  # On z/OS, we install node-gyp for convenience as native add-ons
+  # are dependend on
+  if sys.platform == 'zos':
+    link_path = abspath(install_path, 'bin/node-gyp')
+    if action == uninstall:
+      action([link_path], 'bin/node-gyp')
+    elif action == install:
+      try_symlink('../lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js', link_path)
+    else:
+      assert 0 # unhandled action type
+
 def subdir_files(path, dest, action):
   ret = {}
   for dirpath, dirnames, filenames in os.walk(path):
@@ -133,6 +145,9 @@ def files(action):
   output_file = 'node'
   output_prefix = 'out/Release/'
 
+  if sys.platform == 'zos':
+    action([output_prefix + output_file], 'bin/' + output_file)
+
   if 'false' == variables.get('node_shared'):
     if is_windows:
       output_file += '.exe'
@@ -142,8 +157,29 @@ def files(action):
     else:
       output_file = 'lib' + output_file + '.' + variables.get('shlib_suffix')
 
+    # GYP will output to lib.target except on OS X, this is hardcoded
+    # in its source - see the _InstallableTargetInstallPath function.
+    if sys.platform == 'zos':
+      output_prefix += 'lib.target/'
+
   if 'false' == variables.get('node_shared'):
     action([output_prefix + output_file], 'bin/' + output_file)
+  elif sys.platform == 'zos':
+    # Install libnode.version.x
+    action([output_prefix + output_file], 'lib/' + output_file)
+
+    # Create libnode.x that references libnode.so (for native node module compat)
+    os.system(os.path.dirname(os.path.realpath(__file__)) + "/zos/" +
+              "modifysidedeck.sh " + abspath(install_path, 'lib/' + output_file) +
+              " " + abspath(install_path, 'lib/libnode.x') + " libnode.so")
+
+    # Install libnode.version.so
+    so_name = 'libnode.' + re.sub(r'\.x$', '.so', variables.get('shlib_suffix'))
+    action([output_prefix + so_name], 'lib/' + so_name)
+
+    # Create symlink of libnode.so -> libnode.version.so (for native node module compat)
+    link_path = abspath(install_path, 'lib/libnode.so')
+    try_symlink(so_name, link_path)
   else:
     action([output_prefix + output_file], 'lib/' + output_file)
 
