@@ -122,7 +122,8 @@ def corepack_files(action):
   })
 
   # On z/OS, we install node-gyp for convenience as native add-ons
-  # are dependend on
+  # are dependend on, as some vendors don't have external access
+  # and may want to build their own native node.js modules
   if sys.platform == 'zos':
     link_path = abspath(install_path, 'bin/node-gyp')
     if action == uninstall:
