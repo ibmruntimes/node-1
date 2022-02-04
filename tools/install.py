@@ -121,9 +121,8 @@ def corepack_files(action):
 #   'pnpx': 'dist/pnpx.js',
   })
 
-  # On z/OS, we install node-gyp for convenience as native add-ons
-  # are depended on, as some vendors don't have external access
-  # and may want to build native addon modules.
+  # On z/OS, we install node-gyp for convenience, as some vendors don't have
+  # external access and may want to build native addons.
   if sys.platform == 'zos':
     link_path = abspath(install_path, 'bin/node-gyp')
     if action == uninstall:
