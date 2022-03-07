@@ -96,6 +96,14 @@ int wmain(int argc, wchar_t* wargv[]) {
 #include <signal.h>
 #endif
 
+#if defined(__MVS__)
+#include "zos-setlibpath.h"
+
+// z/OS linker doesn't support rpath function, so we set LIBPATH in the source
+// so libnode DLL can load.
+__setlibpath libpath;
+#endif
+
 namespace node {
 namespace per_process {
 extern bool linux_at_secure;
